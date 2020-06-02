@@ -39,7 +39,7 @@ java {
 }
 
 group = "org.caffinitas.gradle.compilecommand"
-version = "0.1"
+version = "0.1.1"
 val readableName = "Generate file for -XX:CompileCommandFile="
 description = "Generate a file suitable for -XX:CompileCommandFile= using net.nicoulaj.compile-command-annotations:compile-command-annotations"
 

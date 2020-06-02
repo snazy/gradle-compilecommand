@@ -17,13 +17,20 @@
  */
 package org.caffinitas.gradle.compilecommand
 
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.named
-import org.gradle.kotlin.dsl.register
+import java.io.File
+import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
+import java.util.*
+import java.util.stream.Stream
 
 /**
  * Contains all the boilerplate code to use `compile-command-annotations` with Gradle incremental
@@ -42,16 +49,47 @@ class CompileCommandPlugin : Plugin<Project> {
                 dependencies.add(sourceSet!!.annotationProcessorConfigurationName, compileCommands.compileCommandsDependency)
                 dependencies.add(sourceSet.compileOnlyConfigurationName, compileCommands.compileCommandsDependency)
 
-                val concatFiles = tasks.register<ConcatHotspotCompilerTask>(sourceSet.getTaskName("copy", "compileCommand")) {
-                    input = sourceSet.java.outputDir.resolve(compileCommand.intermediateFilesDirectory)
-                    output = compileCommand.outputFile
-                }
-
                 tasks.named<JavaCompile>(sourceSet.compileJavaTaskName) {
                     options.compilerArgs.add("-Acompile.command.incremental.output=" + compileCommand.intermediateFilesDirectory)
-                    finalizedBy(concatFiles)
+
+                    val outputDir = sourceSet.java.outputDir.resolve(compileCommand.intermediateFilesDirectory)
+
+                    inputs.dir(outputDir).withPathSensitivity(PathSensitivity.RELATIVE)
+                    outputs.file(compileCommand.outputFile!!)
+                    doLast {
+                        val files = outputDir.listFiles()
+                                ?: throw GradleException("input '$outputDir' is not a directory containing files")
+
+                        // Sort the input file names to make the output deterministic and cacheable
+                        files.sortBy { f -> f.name }
+                        concatFiles(Arrays.stream(files), compileCommand.outputFile!!)
+                    }
                 }
             }
+        }
+    }
+
+    private fun concatFiles(files: Stream<File>, output: File) {
+        try {
+            FileChannel.open(output.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE).use { w ->
+                files.forEach { file: File ->
+                    try {
+                        FileChannel.open(file.toPath(), StandardOpenOption.READ).use { r ->
+                            var remain = r.size()
+                            var p = 0L
+                            while (remain > 0L) {
+                                val tr = r.transferTo(p, remain, w)
+                                remain -= tr
+                                p += tr
+                            }
+                        }
+                    } catch (e: IOException) {
+                        throw RuntimeException(e)
+                    }
+                }
+            }
+        } catch (e: IOException) {
+            throw GradleException("Failed to concatenate files into file $output", e)
         }
     }
 }

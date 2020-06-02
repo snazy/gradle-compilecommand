@@ -2,7 +2,7 @@ Gradle plugin with support for incremental compilation for the [compile-command-
 
 Writes a single output file suitable to be loaded via the `-XX:CompileCommandFile=<file>` JVM option.
 
-Usage:
+Usage w/ Java projects:
 
 ```(kotlin)
 plugins {
@@ -16,6 +16,11 @@ compileCommands {
     }
 }
 ```
+
+The plugin adds the dependency for the compile-command annotation-processor to the `compileOnly` and
+`annotationProcessor` configurations. The default value for that dependency is
+`net.nicoulaj.compile-command-annotations:compile-command-annotations:1.2.3` and can be changed via the
+property `compileCommands.compileCommandsDependency`.
 
 See https://github.com/nicoulaj/compile-command-annotations
 See http://compile-command-annotations.nicoulaj.net/
