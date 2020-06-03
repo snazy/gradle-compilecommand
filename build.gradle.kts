@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 
+import java.time.Duration
 import org.jetbrains.gradle.ext.*
 
 plugins {
@@ -131,6 +132,7 @@ signing {
 
 nexusPublishing {
     packageGroup.set("org.caffinitas")
+    clientTimeout.set(Duration.ofMinutes(3))
     repositories {
         sonatype {
         }
