@@ -6,7 +6,7 @@ Usage w/ Java projects:
 
 ```(kotlin)
 plugins {
-    id("org.caffinitas.gradle.compilecommand") version "0.1"
+    id("org.caffinitas.gradle.compilecommand") version "0.1.2"
 }
 
 compileCommands {
