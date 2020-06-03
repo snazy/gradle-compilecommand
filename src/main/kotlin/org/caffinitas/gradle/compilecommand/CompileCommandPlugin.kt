@@ -24,6 +24,7 @@ import org.gradle.kotlin.dsl.named
 import java.io.File
 import java.io.IOException
 import java.nio.channels.FileChannel
+import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.stream.Stream
@@ -50,8 +51,6 @@ class CompileCommandPlugin : Plugin<Project> {
 
                     val outputDir = sourceSet.java.outputDir.resolve(compileCommand.intermediateFilesDirectory)
 
-                    inputs.dir(outputDir).withPathSensitivity(PathSensitivity.RELATIVE)
-                    outputs.file(compileCommand.outputFile!!)
                     doLast {
                         val files = outputDir.listFiles()
                                 ?: throw GradleException("input '$outputDir' is not a directory containing files")
